@@ -29,4 +29,4 @@ jobs:
     - name: Run Selenium test
       run: |
         export DISPLAY=:99
-        python login_test.py
+        python src/get_newsletter.py
