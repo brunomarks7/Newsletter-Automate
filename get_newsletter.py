@@ -32,7 +32,8 @@ chrome_options.add_experimental_option(
 
 def login():
     driver = webdriver.Chrome(options=chrome_options)
-
+    print(login_url)
+    exit()
     try:
         driver.quit()
         driver.get(login_url)
