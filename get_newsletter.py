@@ -4,8 +4,9 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
 import time
-
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -28,15 +29,18 @@ chrome_options.add_experimental_option(
         "safebrowsing.enabled": True,
     },
 )
+chrome_options.add_argument("--headless")  # Run in headless mode if needed
+chrome_options.add_argument("--no-sandbox")
+chrome_options.add_argument("--disable-dev-shm-usage")
 
 
 def login():
-    driver = webdriver.Chrome(options=chrome_options)
-    print(login_url)
-    exit()
+    service = Service(ChromeDriverManager().install())
+    driver = webdriver.Chrome(service=service, options=chrome_options)
+
     try:
-        driver.quit()
         driver.get(login_url)
+        print("Página de login carregada.")
 
         username_field = driver.find_element(By.ID, "username")
         password_field = driver.find_element(By.ID, "password")
@@ -47,23 +51,25 @@ def login():
         username_field.send_keys(user_email)
         password_field.send_keys(user_password)
         login_button.click()
+        print("Credenciais inseridas e botão de login clicado.")
 
-        time.sleep(10)
+        time.sleep(10)  # Ajuste conforme necessário
 
         assert "Projects" in driver.page_source
+        print("Login bem-sucedido e página de projetos carregada.")
 
         item_card_email = driver.find_element(
             By.CSS_SELECTOR, "div[data-qa='itemCard_email']"
         )
-
         actions = ActionChains(driver)
-
         actions.move_to_element(item_card_email).perform()
+
         target_div = driver.find_element(By.CSS_SELECTOR, "div.top[tabindex='0']")
         secondary_button = target_div.find_element(
             By.CSS_SELECTOR, "button[data-qa='secondary-button']"
         )
         secondary_button.click()
+        print("Botão secundário clicado.")
 
         download_button = driver.find_element(
             By.XPATH,
@@ -71,21 +77,20 @@ def login():
         )
 
         before_click_files = set(os.listdir(download_dir))
-
         download_button.click()
+        print("Botão de download clicado.")
 
         time.sleep(5)
 
         export_modal_zip = driver.find_element(
             By.CSS_SELECTOR, "div[data-qa='export_modal_zip']"
         )
-
         export_modal_zip.click()
+        print("Botão de exportação ZIP clicado.")
 
         time.sleep(20)
 
         after_click_files = set(os.listdir(download_dir))
-
         new_files = after_click_files - before_click_files
 
         zip_downloaded = any(file.endswith(".zip") for file in new_files)
@@ -94,7 +99,8 @@ def login():
             print("O arquivo ZIP foi baixado com sucesso.")
         else:
             print("O download do arquivo ZIP não foi iniciado.")
-
+    except Exception as e:
+        print(f"Ocorreu um erro: {e}")
     finally:
         driver.quit()
 
